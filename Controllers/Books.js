@@ -37,8 +37,9 @@ const updateNumber = async function (req, res, next) {
   ) {
     const id = Number(req.params.id);
     try {
+      await db.query("begin;");
       const queryResult = await db.query(
-        "SELECT number FROM books WHERE id = $1",
+        "SELECT number FROM books WHERE id = $1 for update",
         [id]
       );
       console.log("helllo");
@@ -56,10 +57,11 @@ const updateNumber = async function (req, res, next) {
           body: {},
           message: "book number in not valid!",
         });
-      await db.query("UPDATE books SET number = $1 where id = $2", [
+      await db.query("UPDATE books SET number = $1 where id = $2;", [
         finalBookNumber,
         id,
       ]);
+      await db.query("commit;");
       return res.status(200).json({
         success: true,
         body: {},
