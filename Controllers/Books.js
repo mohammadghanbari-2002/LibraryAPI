@@ -8,7 +8,9 @@ const getBookByName = async function (req, res, next) {
   }
   const name = req.query.name.split("+").join(" ");
   try {
-    const books = await db.query("SELECT * FROM books WHERE name = $1", [name]);
+    const books = await db.query("SELECT name FROM books WHERE name = $1", [
+      name,
+    ]);
     if (books.rowCount !== 0) {
       return res.status(200).json({
         success: true,
@@ -26,9 +28,58 @@ const getBookByName = async function (req, res, next) {
   }
 };
 
+const updateNumber = async function (req, res, next) {
+  const { increased, number } = req.body;
+  if (
+    (increased === "true" || increased === "false") &&
+    number &&
+    Number.isInteger(+number)
+  ) {
+    const id = Number(req.params.id);
+    try {
+      const queryResult = await db.query(
+        "SELECT number FROM books WHERE id = $1",
+        [id]
+      );
+      console.log("helllo");
+
+      const bodyNumber = Number(number);
+      const bookNumber = queryResult.rows[0].number;
+      let finalBookNumber =
+        increased === "true"
+          ? bookNumber + bodyNumber
+          : bookNumber - bodyNumber;
+
+      if (finalBookNumber < 0)
+        return res.status(400).json({
+          success: false,
+          body: {},
+          message: "book number in not valid!",
+        });
+      await db.query("UPDATE books SET number = $1 where id = $2", [
+        finalBookNumber,
+        id,
+      ]);
+      return res.status(200).json({
+        success: true,
+        body: {},
+        message: "book's number updated",
+      });
+    } catch (error) {
+      const err = new Error("cannot find the book");
+      err.status = 404;
+      return next(err);
+    }
+  } else {
+    const err = new Error("bad request!!!");
+    err.status = 400;
+    return next(err);
+  }
+};
+
 const getBooks = async function (req, res, next) {
   try {
-    const books = await db.query("SELECT * FROM books ORDER BY id ASC");
+    const books = await db.query("SELECT * FROM books");
     res.status(200).json({
       success: true,
       body: books.rows,
@@ -43,7 +94,7 @@ const getBooks = async function (req, res, next) {
 const getBookById = async function (req, res, next) {
   const id = Number(req.params.id);
   try {
-    const book = await db.query(`SELECT * FROM books WHERE id = ${id}`);
+    const book = await db.query("SELECT * FROM books WHERE id = $1", [id]);
     if (book.rowCount) {
       res.status(200).json({
         success: true,
@@ -64,7 +115,7 @@ const getBookById = async function (req, res, next) {
 const deleteBookById = async function (req, res, next) {
   try {
     const id = Number(req.params.id);
-    const book = await db.query(`SELECT * FROM books WHERE id = ${id}`);
+    const book = await db.query("SELECT * FROM books WHERE id = $1", [id]);
     if (book.rowCount) {
       await db.query(`DELETE FROM books WHERE id = ${id}`);
       res.status(204).json({
@@ -114,7 +165,7 @@ const addBook = async function (req, res, next) {
 
 const updateBook = async function (req, res, next) {
   const id = Number(req.params.id);
-  const book = await db.query(`SELECT * FROM books WHERE id = ${id}`);
+  const book = await db.query("SELECT * FROM books WHERE id = $1", [id]);
 
   if (!book.rowCount) {
     const err = new Error("cannot find the book");
@@ -159,4 +210,5 @@ module.exports = {
   addBook,
   updateBook,
   getBookByName,
+  updateNumber,
 };

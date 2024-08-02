@@ -6,6 +6,7 @@ const {
   addBook,
   updateBook,
   getBookByName,
+  updateNumber,
 } = require("../Controllers/Books");
 const router = express.Router();
 
@@ -14,5 +15,6 @@ router.get("/", getBooks);
 router.get("/:id", getBookById);
 router.delete("/:id", deleteBookById);
 router.post("/", addBook);
+router.put("/updatebooknumber/:id", updateNumber);
 router.put("/:id", updateBook);
 module.exports = router;
