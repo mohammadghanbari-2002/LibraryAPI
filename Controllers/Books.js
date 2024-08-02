@@ -33,7 +33,8 @@ const updateNumber = async function (req, res, next) {
   if (
     (increased === "true" || increased === "false") &&
     number &&
-    Number.isInteger(+number)
+    Number.isInteger(+number) &&
+    +number > 0
   ) {
     const id = Number(req.params.id);
     try {
