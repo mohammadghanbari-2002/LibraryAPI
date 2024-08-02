@@ -82,10 +82,32 @@ const updateNumber = async function (req, res, next) {
 
 const getBooks = async function (req, res, next) {
   try {
-    const books = await db.query("SELECT * FROM books");
+    let page = 1,
+      limit = 4;
+    if (req.query.page > 0) {
+      page = parseInt(req.query.page);
+    }
+    if (req.query.limit > 0) {
+      limit = parseInt(req.query.limit);
+    }
+
+    const start = (page - 1) * limit;
+    const books = await db.query(
+      "SELECT * FROM books  ORDER BY id ASC LIMIT $1 OFFSET $2",
+      [limit, start]
+    );
+    console.log(books);
+    const totalNumberOfBooks = await db.query(
+      `SELECT COUNT(*) AS total FROM books`
+    );
+
+    //const books = await db.query("SELECT * FROM books");
     res.status(200).json({
       success: true,
-      body: books.rows,
+      body: {
+        books: books.rows,
+        totalPages: totalNumberOfBooks.rows[0].total / limit,
+      },
       message: "",
     });
   } catch (err) {
